@@ -432,9 +432,15 @@ class ChessEvaluator:
         results["win_rate"] = results["wins"] / total if total > 0 else 0
         results["draw_rate"] = results["draws"] / total if total > 0 else 0
         results["loss_rate"] = results["losses"] / total if total > 0 else 0
-        results["avg_game_length"] = results["total_moves"] / total if total > 0 else 0
-        results["illegal_move_rate"] = results["illegal_moves"] / results["total_moves"] \
-            if results["total_moves"] > 0 else 0
+
+        total_attempts = results["total_moves"] + results["illegal_moves"]
+
+        # Average length counts both legal moves and illegal attempts so early illegal terminations
+        # don't show as near-zero length games.
+        results["avg_game_length"] = total_attempts / total if total > 0 else 0
+
+        # Illegal move rate: illegal attempts over total attempts
+        results["illegal_move_rate"] = results["illegal_moves"] / total_attempts if total_attempts > 0 else 0
         
         # Estimate ELO (simplified)
         # Stockfish Level 1 is approximately 1350 ELO

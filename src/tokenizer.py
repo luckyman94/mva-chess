@@ -63,6 +63,13 @@ class ChessTokenizer(PreTrainedTokenizer):
         self._bos_token = self.BOS_TOKEN
         self._eos_token = self.EOS_TOKEN
         self._unk_token = self.UNK_TOKEN
+
+        # Remove any duplicate special-token entries passed through kwargs
+        # to avoid "multiple values for keyword" errors when loading from disk.
+        kwargs.pop("pad_token", None)
+        kwargs.pop("bos_token", None)
+        kwargs.pop("eos_token", None)
+        kwargs.pop("unk_token", None)
         
         # Load or create vocabulary
         if vocab is not None:

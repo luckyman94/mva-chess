@@ -82,6 +82,8 @@ class ChessConfig(PretrainedConfig):
         self.dropout = dropout
         self.layer_norm_epsilon = layer_norm_epsilon
         self.tie_weights = tie_weights
+        # Inform HF base class about tying behavior
+        self.tie_word_embeddings = bool(tie_weights)
 
 
 class MultiHeadAttention(nn.Module):
@@ -238,6 +240,8 @@ class ChessForCausalLM(PreTrainedModel):
     config_class = ChessConfig
     base_model_prefix = "transformer"
     supports_gradient_checkpointing = True
+    # Suppress missing-key warning for tied lm_head when loading
+    keys_to_ignore_on_load_missing = ["lm_head.weight"]
     
     def __init__(self, config: ChessConfig):
         super().__init__(config)
@@ -268,7 +272,26 @@ class ChessForCausalLM(PreTrainedModel):
         
         # Tie weights if configured
         if config.tie_weights:
-            self.lm_head.weight = self.wte.weight
+            self.tie_weights()
+
+    def get_input_embeddings(self) -> nn.Module:
+        return self.wte
+
+    def set_input_embeddings(self, new_embeddings: nn.Module):
+        self.wte = new_embeddings
+        if getattr(self.config, "tie_weights", False):
+            self.tie_weights()
+
+    def get_output_embeddings(self) -> nn.Module:
+        return self.lm_head
+
+    def set_output_embeddings(self, new_embeddings: nn.Module):
+        self.lm_head = new_embeddings
+
+    def tie_weights(self):
+        # Use HF helper to tie or clone depending on config
+        if getattr(self.config, "tie_weights", False) or getattr(self.config, "tie_word_embeddings", False):
+            self._tie_or_clone_weights(self.lm_head, self.wte)
     
     def _init_weights(self, module: nn.Module):
         """Initialize weights following GPT-2 style."""

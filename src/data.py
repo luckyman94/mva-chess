@@ -71,9 +71,12 @@ class ChessDataset(Dataset):
     def __getitem__(self, idx: int) -> Dict[str, torch.Tensor]:
         game = self.data[idx][self.column]
         
+        # Prepend BOS token for proper language modeling
+        game_with_bos = self.tokenizer.bos_token + " " + game
+        
         # Tokenize
         encoding = self.tokenizer(
-            game,
+            game_with_bos,
             truncation=True,
             max_length=self.max_length,
             padding="max_length",
