@@ -126,20 +126,6 @@ def parse_args():
         help="Checkpoint saving frequency"
     )
     
-    # Hub arguments
-    parser.add_argument(
-        "--push_to_hub", action="store_true",
-        help="Push model to Hugging Face Hub"
-    )
-    parser.add_argument(
-        "--hub_model_id", type=str, default=None,
-        help="Model ID on Hugging Face Hub"
-    )
-    parser.add_argument(
-        "--hub_organization", type=str, default=None,
-        help="Hugging Face organization"
-    )
-    
     return parser.parse_args()
 
 
@@ -228,8 +214,6 @@ def main():
         load_best_model_at_end=True,
         metric_for_best_model="eval_loss",
         greater_is_better=False,
-        push_to_hub=args.push_to_hub,
-        hub_model_id=args.hub_model_id,
         seed=args.seed,
         bf16=torch.cuda.is_available() and torch.cuda.is_bf16_supported(),
         report_to=["none"],
@@ -250,14 +234,9 @@ def main():
     trainer.train()
     
     # Save final model
-    print("\n💾 Saving final model...")
+    print("\nSaving final model...")
     trainer.save_model(os.path.join(args.output_dir, "final_model"))
     tokenizer.save_pretrained(os.path.join(args.output_dir, "final_model"))
-    
-    # Push to Hub if requested
-    if args.push_to_hub:
-        print("\n📤 Pushing to Hugging Face Hub...")
-        trainer.push_to_hub()
     
     print("\nTraining complete!")
     print(f"   Model saved to: {args.output_dir}/final_model")

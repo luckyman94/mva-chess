@@ -51,13 +51,6 @@ python -m src.train \
     --output_dir ./my_model \
     --num_train_epochs 3 \
     --per_device_train_batch_size 32
-
-# Push to Hugging Face Hub
-python -m src.train \
-    --output_dir ./my_model \
-    --push_to_hub \
-    --hub_model_id my-chess-model \
-    --hub_organization your-org
 ```
 
 ### Evaluate Your Model
@@ -86,16 +79,6 @@ python -m src.evaluate \
 
 ## Parameter Budget
 
-Here's a typical budget:
-
-| Component | Calculation | Params |
-|-----------|-------------|--------|
-| Token Embeddings | V × d | ~128,000 |
-| Position Embeddings | n_ctx × d | ~33,000 |
-| Transformer Layers | L × ~148k | ~592,000 |
-| LM Head | (tied) | 0 |
-| **Total** | | **~753,000** |
-
 Use the utility function to check your budget:
 
 ```python
@@ -121,28 +104,7 @@ print_parameter_budget(config)
 ### Custom Tokenizer
 
 The template provides a move-level tokenizer that builds vocabulary from the actual dataset.
-
-**Key parameters:**
-- `min_frequency`: Only include moves that appear at least N times (default: 500)
-- `max_samples`: Number of games to scan when building vocabulary (default: 100k)
-
-```python
-from src import ChessTokenizer
-
-# Build from dataset with frequency filtering
-tokenizer = ChessTokenizer.build_vocab_from_dataset(
-    dataset_name="dlouapre/lichess_2025-01_1M",
-    min_frequency=500,  # Higher = smaller vocab, but may miss rare moves
-    max_samples=100000,  # More samples = more complete vocab
-)
-
-# Typical vocabulary sizes:
-# min_frequency=100 -> ~7k tokens (too many)
-# min_frequency=500 -> ~1k tokens (recommended, stays under 1M params)
-# min_frequency=1000 -> ~600 tokens (may miss some valid moves)
-```
-
-**The tokenizer only includes moves that actually appear in real games**, avoiding the 32k bloat of generating all theoretical moves.
+Feel free to try different approaches!
 
 ### Custom Architecture
 
@@ -164,14 +126,6 @@ config = ChessConfig(
 
 model = ChessForCausalLM(config)
 ```
-
-### Training Strategies
-
-The template supports several training approaches:
-
-1. **Standard Pre-training**: Next-token prediction on game sequences
-2. **Fine-tuning on GM Games**: Filter for high-rated games only
-3. **RL Fine-tuning**: Use Stockfish evaluations as rewards
 
 ## Evaluation Metrics
 
