@@ -165,3 +165,4 @@ python submit.py --model_path ./my_model/final_model --model_name your-model-nam
 The script will:
 - Upload your model to the LLM-course organization
 - Include your HF username in the model card for tracking
+# mva-chess
